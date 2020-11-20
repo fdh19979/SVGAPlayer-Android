@@ -6,7 +6,6 @@ import android.annotation.SuppressLint
 import android.content.Context
 import android.os.Build
 import android.util.AttributeSet
-import android.util.Log
 import android.view.MotionEvent
 import android.view.View
 import android.view.animation.LinearInterpolator
@@ -149,17 +148,19 @@ open class SVGAImageView @JvmOverloads constructor(context: Context, attrs: Attr
         var scale = 1.0
         try {
             val animatorClass = Class.forName("android.animation.ValueAnimator") ?: return scale
-            val field = animatorClass.getDeclaredField("sDurationScale") ?: return scale
-            field.isAccessible = true
-            scale = field.getFloat(animatorClass).toDouble()
+            val getMethod = animatorClass.getDeclaredMethod("getDurationScale") ?: return scale
+            scale = (getMethod.invoke(animatorClass) as Float).toDouble()
             if (scale == 0.0) {
-                field.setFloat(animatorClass, 1.0f)
+                val setMethod = animatorClass.getDeclaredMethod("setDurationScale",Float::class.java) ?: return scale
+                setMethod.isAccessible = true
+                setMethod.invoke(animatorClass,1.0f)
                 scale = 1.0
                 LogUtils.info(TAG,
                         "The animation duration scale has been reset to" +
                                 " 1.0x, because you closed it on developer options.")
             }
         } catch (ignore: Exception) {
+            ignore.printStackTrace()
         }
         return scale
     }
